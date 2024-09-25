@@ -41,6 +41,7 @@ async function processEmails(): Promise<void> {
 				try {
 					const parsed = await simpleParser(message.source);
 					const lead = leadExtractor.extractLeadInfo(parsed);
+					logger.info(`THIS Lead ${lead}`);
 
 					// Check if lead already exists
 					const leadExists = await LeadModel.leadExists(
