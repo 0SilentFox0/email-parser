@@ -5,7 +5,6 @@ import nodemailer from "nodemailer";
 dotenv.config();
 
 async function testEmailConnection() {
-	// Validate and log environment variables
 	const requiredEnvVars = [
 		"EMAIL_HOST",
 		"EMAIL_PORT",
@@ -23,7 +22,6 @@ async function testEmailConnection() {
 		);
 	}
 
-	// Test IMAP connection
 	const client = new ImapFlow({
 		host: process.env.EMAIL_HOST!,
 		port: parseInt(process.env.EMAIL_PORT!),
@@ -45,12 +43,11 @@ async function testEmailConnection() {
 		console.error("IMAP connection failed:", error);
 	}
 
-	// Test SMTP connection
 	const smtpPort = parseInt(process.env.SMTP_PORT!);
 	const smtpConfig = {
 		host: process.env.SMTP_HOST!,
 		port: smtpPort,
-		secure: smtpPort === 465, // Use secure for port 465, otherwise false
+		secure: smtpPort === 465,
 		auth: {
 			user: process.env.EMAIL_USER!,
 			pass: process.env.EMAIL_PASS!,

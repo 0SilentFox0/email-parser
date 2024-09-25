@@ -10,8 +10,10 @@ import { logger } from "./logger-utility";
 
 dotenv.config();
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI as string);
+mongoose
+	.connect(process.env.MONGODB_URI as string)
+	.then(() => logger.info("Connected to MongoDB"))
+	.catch((err) => logger.error("MongoDB connection error:", err));
 
 const imapConfig = {
 	host: process.env.EMAIL_HOST as string,
@@ -36,42 +38,48 @@ async function processEmails(): Promise<void> {
 		const lock = await client.getMailboxLock("INBOX");
 		try {
 			const messages = await emailProcessor.fetchUnseenMessages();
+			logger.info(`Fetched ${messages} unseen messages`);
 
 			for await (const message of messages) {
 				try {
+					logger.info(`Processing message with UID: ${message.uid}`);
 					const parsed = await simpleParser(message.source);
-					const lead = leadExtractor.extractLeadInfo(parsed);
-					logger.info(`THIS Lead ${lead}`);
+					logger.info(`Parsed email from: ${parsed.from?.text}`);
 
-					// Check if lead already exists
+					const lead = leadExtractor.extractLeadInfo(parsed);
+					logger.info(`Extracted lead info: ${JSON.stringify(lead)}`);
+
 					const leadExists = await LeadModel.leadExists(
 						lead.leadId,
 						lead.email
 					);
+					logger.info(`Lead exists: ${leadExists}`);
 
 					if (leadExists) {
 						logger.info(
 							`Lead already exists: ${lead.email} (ID: ${lead.leadId})`
 						);
 						await emailMover.moveEmail(message.uid.toString(), "Duplicate");
+						logger.info(`Moved email to Duplicate folder`);
 					} else {
 						try {
-							await LeadModel.create(lead);
+							const createdLead = await LeadModel.create(lead);
+							logger.info(`Created new lead in database: ${createdLead._id}`);
 							await emailMover.moveEmail(message.uid.toString(), "Processed");
-							logger.info(
-								`Processed new lead: ${lead.email} (ID: ${lead.leadId})`
-							);
+							logger.info(`Moved email to Processed folder`);
 						} catch (dbError) {
 							logger.error(`Database error for email ${message.uid}:`, dbError);
 							await emailMover.moveEmail(
 								message.uid.toString(),
 								"DatabaseError"
 							);
+							logger.info(`Moved email to DatabaseError folder`);
 						}
 					}
 				} catch (parsingError) {
 					logger.error(`Parsing error for email ${message.uid}:`, parsingError);
 					await emailMover.moveEmail(message.uid.toString(), "ParsingError");
+					logger.info(`Moved email to ParsingError folder`);
 				}
 			}
 		} catch (processingError) {
@@ -83,6 +91,7 @@ async function processEmails(): Promise<void> {
 		logger.error("Error connecting to IMAP server:", connectionError);
 	} finally {
 		await client.logout();
+		logger.info("Logged out from IMAP server");
 	}
 }
 

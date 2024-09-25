@@ -9,7 +9,7 @@ export interface Lead {
 	tel: string;
 	geburtsort: string;
 	ip: string;
-	leadId: number; // Changed from 'id' to 'leadId'
+	leadId: number;
 	eingabeschluessel: string;
 	email: string;
 	emailReceived: Date;
@@ -26,7 +26,7 @@ const leadSchema = new Schema<LeadDocument>({
 	tel: { type: String, required: true },
 	geburtsort: { type: String, required: true },
 	ip: { type: String, required: true },
-	leadId: { type: Number, required: true }, // Changed from 'id' to 'leadId'
+	leadId: { type: Number, required: true },
 	eingabeschluessel: { type: String, required: true },
 	email: { type: String, required: true },
 	emailReceived: { type: Date, required: true, default: Date.now },

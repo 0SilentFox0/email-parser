@@ -8,7 +8,7 @@ export class LeadExtractor {
 
 		const extractField = (fieldName: string): string => {
 			const line = lines.find((l) =>
-				l.toLowerCase().startsWith(fieldName.toLowerCase())
+				l.toLowerCase().includes(fieldName.toLowerCase())
 			);
 			return line ? line.split(":")[1]?.trim() || "" : "";
 		};
@@ -16,22 +16,23 @@ export class LeadExtractor {
 		const name = extractField("Name");
 		const [lastName, firstName] = name.split(",").map((n) => n.trim());
 
-		const determineGender = (
-			salutation: string
-		): "male" | "female" | "other" => {
-			const lowerSalutation = salutation.toLowerCase();
-			if (lowerSalutation.includes("herr")) return "male";
-			if (lowerSalutation.includes("frau")) return "female";
+		const determineGender = (gender: string): "male" | "female" | "other" => {
+			const lowerGender = gender.toLowerCase();
+			if (lowerGender.includes("männlich")) return "male";
+			if (lowerGender.includes("weiblich")) return "female";
 			return "other";
 		};
 
-		const salutation = extractField("Anrede");
-		const gender = determineGender(salutation);
+		const gender = determineGender(extractField("Geschlecht"));
 
-		const geburtsdatum = new Date(extractField("Geburtsdatum"));
-		const leadId = parseInt(extractField("ID"));
+		const parseDate = (dateStr: string): Date => {
+			const [day, month, year] = dateStr.split(".").map(Number);
+			return new Date(year, month - 1, day);
+		};
 
-		// Validate and provide default values for required fields
+		const geburtsdatum = parseDate(extractField("Geburtsdatum"));
+		const leadId = parseInt(extractField("Lead-ID"));
+
 		return {
 			wunschposition: extractField("Wunschposition") || "Nicht angegeben",
 			name: `${firstName} ${lastName}` || "Unbekannt",
@@ -42,7 +43,10 @@ export class LeadExtractor {
 			ip: extractField("IP") || "0.0.0.0",
 			leadId: isNaN(leadId) ? 0 : leadId,
 			eingabeschluessel: extractField("Eingabeschlüssel") || "Nicht angegeben",
-			email: parsedEmail.from?.value[0].address || "no-email@example.com",
+			email:
+				extractField("E-Mail") ||
+				parsedEmail.from?.value[0].address ||
+				"no-email@example.com",
 			emailReceived: parsedEmail.date || new Date(),
 			emailSent: "pending",
 			gender: gender,

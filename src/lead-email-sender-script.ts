@@ -7,10 +7,8 @@ import { logger } from "./logger-utility";
 
 dotenv.config();
 
-// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI as string);
 
-// Configure nodemailer
 const transporter = nodemailer.createTransport({
 	host: process.env.SMTP_HOST,
 	port: parseInt(process.env.SMTP_PORT as string),
@@ -69,7 +67,6 @@ async function processNewLeads(): Promise<void> {
 				await sendPersonalizedEmail(lead);
 			} catch (error) {
 				logger.error(`Error processing lead ${lead.email}:`, error);
-				// Continue with the next lead
 			}
 		}
 

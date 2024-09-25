@@ -1,15 +1,7 @@
-2024-09-23T16:18:51.633Z [info]: Connected to IMAP server
-2024-09-23T16:18:52.502Z [error]: Error in email processing: Command failed
-2024-09-25T12:39:14.314Z [info]: Connected to IMAP server
-2024-09-25T12:39:14.703Z [error]: Error processing email 1: Lead validation failed: geburtsdatum: Cast to date failed for value "Invalid Date" (type Date) at path "geburtsdatum", leadId: Cast to Number failed for value "NaN" (type number) at path "leadId", wunschposition: Path `wunschposition` is required., anschrift: Path `anschrift` is required., tel: Path `tel` is required., geburtsort: Path `geburtsort` is required., ip: Path `ip` is required., eingabeschluessel: Path `eingabeschluessel` is required.
-2024-09-25T12:44:00.379Z [info]: Connected to IMAP server
-2024-09-25T12:47:11.479Z [info]: Connected to IMAP server
-2024-09-25T12:47:12.626Z [info]: Lead already exists: no-reply@google.com (ID: 0)
-2024-09-25T12:55:30.430Z [error]: Failed to send email to no-reply@google.com: 404FF5F201000000:error:0A00010B:SSL routines:ssl3_get_record:wrong version number:../deps/openssl/openssl/ssl/record/ssl3_record.c:355:
-
-2024-09-25T12:55:30.434Z [error]: Error processing lead no-reply@google.com: 404FF5F201000000:error:0A00010B:SSL routines:ssl3_get_record:wrong version number:../deps/openssl/openssl/ssl/record/ssl3_record.c:355:
-
-2024-09-25T12:55:30.435Z [info]: Processed 1 new leads
-2024-09-25T12:59:31.519Z [info]: Connected to IMAP server
-2024-09-25T13:04:31.761Z [info]: Processed new lead: no-reply@google.com (ID: 0)
-2024-09-25T13:04:31.770Z [error]: Unhandled error in email processing: Connection not available
+2024-09-25T14:10:35.404Z [info]: Connected to IMAP server
+2024-09-25T14:13:05.597Z [info]: Connected to IMAP server
+2024-09-25T14:18:29.611Z [info]: Connected to IMAP server
+2024-09-25T14:22:52.309Z [info]: Connected to IMAP server
+2024-09-25T14:22:52.449Z [info]: Fetched [object AsyncGenerator] unseen messages
+2024-09-25T14:22:52.509Z [info]: Logged out from IMAP server
+2024-09-25T14:22:53.542Z [info]: Connected to MongoDB
