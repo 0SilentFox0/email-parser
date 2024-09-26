@@ -1,4 +1,3 @@
-import { log } from "console";
 import dotenv from "dotenv";
 import { ImapFlow } from "imapflow";
 import nodemailer from "nodemailer";
@@ -34,9 +33,6 @@ async function testEmailConnection() {
 	});
 
 	try {
-		console.log(
-			`Attempting to connect to IMAP server: ${process.env.EMAIL_HOST}`
-		);
 		await client.connect();
 		console.log("IMAP connection successful");
 		await client.logout();
@@ -66,9 +62,6 @@ async function testEmailConnection() {
 	const transporter = nodemailer.createTransport(smtpConfig);
 
 	try {
-		console.log(
-			`Attempting to connect to SMTP server: ${process.env.SMTP_HOST}`
-		);
 		await transporter.verify();
 		console.log("SMTP connection successful");
 	} catch (error) {

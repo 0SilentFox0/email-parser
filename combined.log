@@ -625,3 +625,15 @@
 2024-09-26T08:47:27.326Z [info]: Email sent successfully to antonmerkotun@gmail.com
 2024-09-26T08:47:28.413Z [info]: Email sent successfully to mav4932@gmail.com
 2024-09-26T08:47:28.414Z [info]: Processed 2 new leads
+2024-09-26T11:35:11.691Z [info]: Connected to IMAP server
+2024-09-26T11:35:12.020Z [info]: Fetched [object AsyncGenerator] unseen messages
+2024-09-26T11:35:12.700Z [info]: Connected to MongoDB
+2024-09-26T12:52:48.124Z [info]: Finished
+2024-09-26T12:54:17.535Z [info]: Connected to IMAP server
+2024-09-26T12:54:17.732Z [info]: Fetched [object AsyncGenerator] unseen messages
+2024-09-26T12:54:27.857Z [error]: Parsing error for email 10: Operation `leads.findOne()` buffering timed out after 10000ms
+2024-09-26T12:54:47.206Z [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2024-09-26T12:56:43.946Z [info]: Connected to IMAP server
+2024-09-26T12:56:44.137Z [info]: Fetched [object AsyncGenerator] unseen messages
+2024-09-26T12:56:54.263Z [error]: Parsing error for email 10: Operation `leads.findOne()` buffering timed out after 10000ms
+2024-09-26T12:57:13.602Z [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
