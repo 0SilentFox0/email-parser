@@ -12,7 +12,7 @@ mongoose.connect(process.env.MONGODB_URI as string);
 const transporter = nodemailer.createTransport({
 	host: process.env.SMTP_HOST,
 	port: parseInt(process.env.SMTP_PORT as string),
-	secure: true,
+	secure: false,
 	auth: {
 		user: process.env.EMAIL_USER,
 		pass: process.env.EMAIL_PASS,
@@ -40,7 +40,7 @@ Your Company Name`,
 		attachments: [
 			{
 				filename: "product_brochure.pdf",
-				path: path.join(__dirname, process.env.PDF_PATH as string),
+				path: path.join(__dirname,'../', process.env.PDF_PATH as string),
 			},
 		],
 	};

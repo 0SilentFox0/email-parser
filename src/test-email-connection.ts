@@ -1,3 +1,4 @@
+import { log } from "console";
 import dotenv from "dotenv";
 import { ImapFlow } from "imapflow";
 import nodemailer from "nodemailer";

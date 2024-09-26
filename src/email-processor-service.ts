@@ -16,7 +16,6 @@ export class EmailProcessor {
 				size: true,
 				source: true,
 			},
-			{ uid: true }
 		);
 
 		return messages;
