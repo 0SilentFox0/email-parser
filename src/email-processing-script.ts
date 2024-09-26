@@ -4,70 +4,36 @@ import { simpleParser } from "mailparser";
 import mongoose from "mongoose";
 import { EmailProcessor } from "./email-processor-service";
 import { EmailMover } from "./email-mover-service";
-import { LeadExtractor } from "./lead-extractor-service";
+import { LeadExtractor } from "./lead-extractor-service-ts";
 import { LeadModel } from "./model/lead-model";
 import { logger } from "./logger-utility";
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-const EMAIL_HOST = process.env.EMAIL_HOST as string;
-const EMAIL_PORT = parseInt(process.env.EMAIL_PORT as string);
-const EMAIL_USER = process.env.EMAIL_USER as string;
-const EMAIL_PASS = process.env.EMAIL_PASS as string;
+mongoose.connect(process.env.MONGODB_URI as string);
 
 const imapConfig = {
-	host: EMAIL_HOST,
-	port: EMAIL_PORT,
-	auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+	host: process.env.EMAIL_HOST as string,
+	port: parseInt(process.env.EMAIL_PORT as string),
+	auth: {
+		user: process.env.EMAIL_USER as string,
+		pass: process.env.EMAIL_PASS as string,
+	},
 	secure: true,
-	// logger: console, // Add this line for debugging
+	emitLogs: true,
+	timeoutConnection: 30000, // 30 seconds
+	timeoutIdle: 300000, // 5 minutes
 };
 
-async function connectToMongoDB(): Promise<void> {
-	try {
-		await mongoose.connect(MONGODB_URI);
-	} catch (err) {
-		throw err;
-	}
-}
-
-async function connectToIMAPServer(): Promise<ImapFlow> {
+async function createImapConnection(): Promise<ImapFlow> {
 	const client = new ImapFlow(imapConfig);
 	try {
 		await client.connect();
+		logger.info("Connected to IMAP server");
 		return client;
-	} catch (err) {
-		throw err;
-	}
-}
-
-async function processSingleEmail(
-	message: any,
-	emailProcessor: EmailProcessor,
-	emailMover: EmailMover,
-	leadExtractor: LeadExtractor
-): Promise<void> {
-	try {
-		const parsed = await simpleParser(message.source);
-		const lead = leadExtractor.extractLeadInfo(parsed);
-		const leadExists = await LeadModel.leadExists(lead.leadId, lead.email);
-
-		if (leadExists) {
-			await emailMover.moveEmail(message.uid, "Duplicate");
-		} else {
-			try {
-				await LeadModel.create(lead);
-				await emailMover.moveEmail(message.uid, "Processed");
-			} catch (dbError) {
-				await emailMover.moveEmail(message.uid, "ProcessingError");
-			}
-		}
-
-		await emailMover.markAsRead(message.uid);
 	} catch (error) {
-		await emailMover.moveEmail(message.uid, "ProcessingError");
-		await emailMover.markAsRead(message.uid);
+		logger.error("Error connecting to IMAP server:", error);
+		throw error;
 	}
 }
 
@@ -75,44 +41,60 @@ async function processEmails(): Promise<void> {
 	let client: ImapFlow | null = null;
 
 	try {
-		await connectToMongoDB();
-		client = await connectToIMAPServer();
-
+		client = await createImapConnection();
 		const emailProcessor = new EmailProcessor(client);
 		const emailMover = new EmailMover(client);
 		const leadExtractor = new LeadExtractor();
 
-		await emailMover.initialize();
-
 		const lock = await client.getMailboxLock("INBOX");
 		try {
 			const messages = await emailProcessor.fetchUnseenMessages();
+			logger.info(`Fetched ${messages.length} unseen messages`);
 
-			for await (const message of messages) {
-				await processSingleEmail(
-					message,
-					emailProcessor,
-					emailMover,
-					leadExtractor
-				);
+			for (const message of messages) {
+				try {
+					const parsed = await simpleParser(message.source);
+					const lead = leadExtractor.extractLeadInfo(parsed);
+					await LeadModel.create(lead);
+					await emailMover.moveEmail(message.uid.toString(), "Processed");
+					logger.info(`Processed email: ${message.uid}`);
+				} catch (error) {
+					logger.error(`Error processing email ${message.uid}:`, error);
+					if (client.usable) {
+						await emailMover.moveEmail(message.uid.toString(), "ParsingError");
+					} else {
+						logger.error("IMAP connection lost, reconnecting...");
+						client = await createImapConnection();
+						await emailMover.moveEmail(message.uid.toString(), "ParsingError");
+					}
+				}
 			}
 		} finally {
 			lock.release();
 		}
 	} catch (error) {
+		logger.error("Error in email processing:", error);
 	} finally {
 		if (client) {
-			await client.logout();
+			try {
+				await client.logout();
+				logger.info("Logged out from IMAP server");
+			} catch (error) {
+				logger.error("Error logging out from IMAP server:", error);
+			}
 		}
-		logger.info("Finished");
-		mongoose.connection.close();
 	}
 }
 
-processEmails()
-	.catch((error) => {
-		logger.error("Unhandled error in email processing:", error);
-	})
-	.finally(() => {
-		process.exit(0);
-	});
+async function main() {
+	try {
+		await processEmails();
+	} catch (error) {
+		logger.error("Unhandled error in main process:", error);
+	} finally {
+		await mongoose.connection.close();
+		logger.info("Closed MongoDB connection");
+	}
+}
+
+main().catch(console.error);
