@@ -42,44 +42,30 @@ async function processEmails(): Promise<void> {
 
 			for await (const message of messages) {
 				try {
-					logger.info(`Processing message with UID: ${message.uid}`);
 					const parsed = await simpleParser(message.source);
-					logger.info(`Parsed email from: ${parsed.from?.text}`);
-
 					const lead = leadExtractor.extractLeadInfo(parsed);
-					logger.info(`Extracted lead info: ${JSON.stringify(lead)}`);
-
 					const leadExists = await LeadModel.leadExists(
 						lead.leadId,
 						lead.email
 					);
-					logger.info(`Lead exists: ${leadExists}`);
 
 					if (leadExists) {
-						logger.info(
-							`Lead already exists: ${lead.email} (ID: ${lead.leadId})`
-						);
 						await emailMover.moveEmail(message.uid.toString(), "Duplicate");
-						logger.info(`Moved email to Duplicate folder`);
 					} else {
 						try {
-							const createdLead = await LeadModel.create(lead);
-							logger.info(`Created new lead in database: ${createdLead._id}`);
-							await emailMover.moveEmail(message.uid.toString(), "Processed");
-							logger.info(`Moved email to Processed folder`);
+							await LeadModel.create(lead);
+							// await emailMover.moveEmail(message.uid.toString(), "Processed");
 						} catch (dbError) {
 							logger.error(`Database error for email ${message.uid}:`, dbError);
-							await emailMover.moveEmail(
-								message.uid.toString(),
-								"DatabaseError"
-							);
-							logger.info(`Moved email to DatabaseError folder`);
+							// await emailMover.moveEmail(
+								// message.uid.toString(),
+								// "DatabaseError"
+							// );
 						}
 					}
 				} catch (parsingError) {
 					logger.error(`Parsing error for email ${message.uid}:`, parsingError);
-					await emailMover.moveEmail(message.uid.toString(), "ParsingError");
-					logger.info(`Moved email to ParsingError folder`);
+					// await emailMover.moveEmail(message.uid.toString(), "ParsingError");
 				}
 			}
 		} catch (processingError) {
@@ -91,7 +77,6 @@ async function processEmails(): Promise<void> {
 		logger.error("Error connecting to IMAP server:", connectionError);
 	} finally {
 		await client.logout();
-		logger.info("Logged out from IMAP server");
 	}
 }
 
