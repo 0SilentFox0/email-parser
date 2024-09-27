@@ -36,12 +36,4 @@ export class EmailMover {
 			throw error;
 		}
 	}
-
-	// async markAsRead(uid: number): Promise<void> {
-	// 	try {
-	// 		await this.client.messageFlagsAdd([uid], ["\\Seen"], { uid: true });
-	// 	} catch (error) {
-	// 		throw error;
-	// 	}
-	// }
 }
