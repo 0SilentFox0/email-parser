@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"start": "ts-node src/email-processing-script",
-		"send-email": "ts-node src/lead-email-sender-script",
+		"send-all": "ts-node src/lead-email-sender-script",
+		"send-single": "ts-node src/lead-email-sender-single",
 		"test-email-connection": "ts-node src/test-email-connection",
 		"dev": "ts-node src/email-processing-script"
 	},
