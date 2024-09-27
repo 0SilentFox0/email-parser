@@ -18,7 +18,6 @@ export class EmailMover {
 
 			if (!folderExists) {
 				await this.client.mailboxCreate(folderName);
-			} else {
 			}
 		} catch (error) {
 			throw new Error(
@@ -27,22 +26,22 @@ export class EmailMover {
 		}
 	}
 
-	async moveEmail(uid: string | number[], destFolder: string): Promise<void> {
+	async moveEmail(uid: number, destFolder: string): Promise<void> {
 		if (!this.folders.includes(destFolder)) {
 			throw new Error(`Invalid destination folder: ${destFolder}`);
 		}
 		try {
-			await this.client.messageMove(uid, destFolder);
+			await this.client.messageMove([uid], destFolder, { uid: true });
 		} catch (error) {
 			throw error;
 		}
 	}
 
-	async markAsRead(uid: string | number[]): Promise<void> {
-		try {
-			await this.client.messageFlagsAdd(uid, ["\\Seen"]);
-		} catch (error) {
-			throw error;
-		}
-	}
+	// async markAsRead(uid: number): Promise<void> {
+	// 	try {
+	// 		await this.client.messageFlagsAdd([uid], ["\\Seen"], { uid: true });
+	// 	} catch (error) {
+	// 		throw error;
+	// 	}
+	// }
 }

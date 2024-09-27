@@ -56,16 +56,16 @@ async function processEmails(): Promise<void> {
 					const parsed = await simpleParser(message.source);
 					const lead = leadExtractor.extractLeadInfo(parsed);
 					await LeadModel.create(lead);
-					await emailMover.moveEmail(message.uid.toString(), "Processed");
+					await emailMover.moveEmail(message.uid, "Processed");
 					logger.info(`Processed email: ${message.uid}`);
 				} catch (error) {
 					logger.error(`Error processing email ${message.uid}:`, error);
 					if (client.usable) {
-						await emailMover.moveEmail(message.uid.toString(), "ParsingError");
+						await emailMover.moveEmail(message.uid, "ProcessingError");
 					} else {
 						logger.error("IMAP connection lost, reconnecting...");
 						client = await createImapConnection();
-						await emailMover.moveEmail(message.uid.toString(), "ParsingError");
+						await emailMover.moveEmail(message.uid, "ProcessingError");
 					}
 				}
 			}
