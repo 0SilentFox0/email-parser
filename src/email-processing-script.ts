@@ -4,7 +4,7 @@ import { simpleParser } from "mailparser";
 import mongoose from "mongoose";
 import { EmailProcessor } from "./email-processor-service";
 import { EmailMover } from "./email-mover-service";
-import { LeadExtractor } from "./lead-extractor-service-ts";
+import { LeadExtractor } from "./lead-extractor-service";
 import { LeadModel } from "./model/lead-model";
 import { logger } from "./logger-utility";
 

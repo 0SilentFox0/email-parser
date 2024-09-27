@@ -35,6 +35,7 @@ const leadSchema = new Schema<LeadDocument>({
 		enum: ["pending", "sent", "failed"],
 		default: "pending",
 	},
+	gender: { type: String, required: true },
 });
 
 leadSchema.statics.leadExists = async function (

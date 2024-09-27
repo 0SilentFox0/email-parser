@@ -6,43 +6,42 @@ export class LeadExtractor {
 		const content = parsedEmail.text || "";
 		const lines = content.split("\n");
 
-		const name = this.extractName(lines);
-		const gender = this.extractGender(lines);
-		const geburtsdatum = this.extractBirthDate(lines);
-		const leadId = this.extractLeadId(lines);
+		const extractedFields = {
+			wunschposition: this.extractField(lines, "Wunschposition"),
+			name: this.extractName(lines),
+			gender: this.extractGender(lines),
+			email: this.extractEmail(parsedEmail),
+			anschrift: this.extractField(lines, "Anschrift"),
+			geburtsdatum: this.extractBirthDate(lines),
+			tel: this.extractField(lines, "Tel"),
+			geburtsort: this.extractField(lines, "Geburtsort"),
+			ip: this.extractField(lines, "IP"),
+			leadId: this.extractLeadId(lines),
+			eingabeschluessel: this.extractField(lines, "Eingabeschlüssel"),
+		};
 
 		return {
-			wunschposition:
-				this.extractField(lines, "Wunschposition") || "Nicht angegeben",
-			name: name,
-			anschrift: this.extractField(lines, "Anschrift") || "Nicht angegeben",
-			geburtsdatum: geburtsdatum,
-			tel: this.extractField(lines, "Tel") || "Nicht angegeben",
-			geburtsort: this.extractField(lines, "Geburtsort") || "Nicht angegeben",
-			ip: this.extractField(lines, "IP") || "0.0.0.0",
-			leadId: leadId,
-			eingabeschluessel:
-				this.extractField(lines, "Eingabeschlüssel") || "Nicht angegeben",
-			email: this.extractEmail(parsedEmail) || "no-email@example.com",
+			...extractedFields,
 			emailReceived: parsedEmail.date || new Date(),
 			emailSent: "pending",
-			gender: gender,
 		};
 	}
 
 	private extractField(lines: string[], fieldName: string): string {
 		const line = lines.find((l) =>
-			l.toLowerCase().includes(fieldName.toLowerCase())
+			l.toLowerCase().startsWith(fieldName.toLowerCase() + ":")
 		);
-		return line ? line.split(":")[1]?.trim() || "" : "";
+		const extracted = line ? line.split(":").slice(1).join(":").trim() : "";
+		return extracted || "Nicht angegeben";
 	}
 
 	private extractName(lines: string[]): string {
-		const name = this.extractField(lines, "Name")
+		const nameField = this.extractField(lines, "Name");
+		const [lastName = "Unbekannt", firstName = "Unbekannt"] = nameField
 			.split(",")
 			.map((n) => n.trim());
-		const [lastName = "Unbekannt", firstName = "Unbekannt"] = name;
-		return `${firstName} ${lastName}`;
+		const fullName = `${firstName} ${lastName}`;
+		return fullName;
 	}
 
 	private extractGender(lines: string[]): "male" | "female" | "other" {
@@ -51,19 +50,43 @@ export class LeadExtractor {
 			männlich: "male",
 			weiblich: "female",
 		};
-		return genderMap[genderField] || "other";
+		const gender = genderMap[genderField] || "other";
+		return gender;
 	}
 
 	private extractBirthDate(lines: string[]): Date {
 		const dateStr = this.extractField(lines, "Geburtsdatum");
-		const [day, month, year] = dateStr.split(".").map(Number);
-		const geburtsdatum = new Date(year, month - 1, day);
-		return isNaN(geburtsdatum.getTime()) ? new Date() : geburtsdatum;
+		const [month, day, year] = dateStr.split(" ");
+		const monthMap: { [key: string]: number } = {
+			Januar: 0,
+			Februar: 1,
+			März: 2,
+			April: 3,
+			Mai: 4,
+			Juni: 5,
+			Juli: 6,
+			August: 7,
+			September: 8,
+			Oktober: 9,
+			November: 10,
+			Dezember: 11,
+		};
+		const monthIndex = monthMap[month];
+		const parsedDay = parseInt(day.replace(",", ""));
+		const parsedYear = parseInt(year);
+
+		if (isNaN(monthIndex) || isNaN(parsedDay) || isNaN(parsedYear)) {
+			return new Date();
+		}
+
+		const date = new Date(parsedYear, monthIndex, parsedDay);
+		return date;
 	}
 
 	private extractLeadId(lines: string[]): number {
 		const leadIdStr = this.extractField(lines, "ID");
-		return parseInt(leadIdStr) || 0;
+		const leadId = parseInt(leadIdStr) || 0;
+		return leadId;
 	}
 
 	private extractEmail(parsedEmail: ParsedMail): string {
@@ -83,10 +106,9 @@ export class LeadExtractor {
 	}
 
 	private extractEmailFromContent(content: string): string | null {
-		console.log(content);
 		const lines = content.split("\n");
 		const emailLine = lines.find((line) =>
-			line.toLowerCase().includes("e-mail:")
+			line.toLowerCase().startsWith("e-mail adresse:")
 		);
 		if (emailLine) {
 			const emailMatch = emailLine.match(/[\w.-]+@[\w.-]+\.\w+/);
