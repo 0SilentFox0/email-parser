@@ -46,31 +46,30 @@ async function processEmails(): Promise<void> {
 		const emailMover = new EmailMover(client);
 		const leadExtractor = new LeadExtractor();
 
-		const lock = await client.getMailboxLock("INBOX");
-		try {
-			const messages = await emailProcessor.fetchUnseenMessages();
-			logger.info(`Fetched ${messages.length} unseen messages`);
+		// Open the INBOX
+		await client.mailboxOpen("INBOX");
 
-			for (const message of messages) {
-				try {
-					const parsed = await simpleParser(message.source);
-					const lead = leadExtractor.extractLeadInfo(parsed);
-					await LeadModel.create(lead);
-					await emailMover.moveEmail(message.uid, "Processed");
-					logger.info(`Processed email: ${message.uid}`);
-				} catch (error) {
-					logger.error(`Error processing email ${message.uid}:`, error);
-					if (client.usable) {
-						await emailMover.moveEmail(message.uid, "ProcessingError");
-					} else {
-						logger.error("IMAP connection lost, reconnecting...");
-						client = await createImapConnection();
-						await emailMover.moveEmail(message.uid, "ProcessingError");
-					}
+		const messages = await emailProcessor.fetchUnseenMessages();
+		logger.info(`Fetched ${messages.length} unseen messages from INBOX`);
+
+		for (const message of messages) {
+			try {
+				const parsed = await simpleParser(message.source);
+				const lead = leadExtractor.extractLeadInfo(parsed);
+				await LeadModel.create(lead);
+				await emailMover.moveEmail(message.uid, "Processed");
+				logger.info(`Processed email: ${message.uid}`);
+			} catch (error) {
+				logger.error(`Error processing email ${message.uid}:`, error);
+				if (client.usable) {
+					await emailMover.moveEmail(message.uid, "ProcessingError");
+				} else {
+					logger.error("IMAP connection lost, reconnecting...");
+					client = await createImapConnection();
+					await client.mailboxOpen("INBOX"); // Re-open INBOX after reconnecting
+					await emailMover.moveEmail(message.uid, "ProcessingError");
 				}
 			}
-		} finally {
-			lock.release();
 		}
 	} catch (error) {
 		logger.error("Error in email processing:", error);

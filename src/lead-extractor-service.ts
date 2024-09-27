@@ -12,7 +12,8 @@ export class LeadExtractor {
 		const leadId = this.extractLeadId(lines);
 
 		return {
-			wunschposition: this.extractField(lines, "Wunschposition") || "Nicht angegeben",
+			wunschposition:
+				this.extractField(lines, "Wunschposition") || "Nicht angegeben",
 			name: name,
 			anschrift: this.extractField(lines, "Anschrift") || "Nicht angegeben",
 			geburtsdatum: geburtsdatum,
@@ -20,7 +21,8 @@ export class LeadExtractor {
 			geburtsort: this.extractField(lines, "Geburtsort") || "Nicht angegeben",
 			ip: this.extractField(lines, "IP") || "0.0.0.0",
 			leadId: leadId,
-			eingabeschluessel: this.extractField(lines, "Eingabeschlüssel") || "Nicht angegeben",
+			eingabeschluessel:
+				this.extractField(lines, "Eingabeschlüssel") || "Nicht angegeben",
 			email: this.extractEmail(parsedEmail) || "no-email@example.com",
 			emailReceived: parsedEmail.date || new Date(),
 			emailSent: "pending",
@@ -29,12 +31,16 @@ export class LeadExtractor {
 	}
 
 	private extractField(lines: string[], fieldName: string): string {
-		const line = lines.find((l) => l.toLowerCase().includes(fieldName.toLowerCase()));
+		const line = lines.find((l) =>
+			l.toLowerCase().includes(fieldName.toLowerCase())
+		);
 		return line ? line.split(":")[1]?.trim() || "" : "";
 	}
 
 	private extractName(lines: string[]): string {
-		const name = this.extractField(lines, "Name").split(",").map((n) => n.trim());
+		const name = this.extractField(lines, "Name")
+			.split(",")
+			.map((n) => n.trim());
 		const [lastName = "Unbekannt", firstName = "Unbekannt"] = name;
 		return `${firstName} ${lastName}`;
 	}
@@ -61,6 +67,39 @@ export class LeadExtractor {
 	}
 
 	private extractEmail(parsedEmail: ParsedMail): string {
-		return this.extractField(parsedEmail.text?.split("\n") || [], "E-Mail") || parsedEmail.from?.value[0]?.address || "no-email@example.com";
+		const emailFromContent = this.extractEmailFromContent(
+			parsedEmail.text || ""
+		);
+		if (emailFromContent) {
+			return emailFromContent;
+		}
+
+		const fromAddress = parsedEmail.from?.value[0]?.address;
+		if (fromAddress && this.isValidEmail(fromAddress)) {
+			return fromAddress;
+		}
+
+		return "no-email@example.com";
+	}
+
+	private extractEmailFromContent(content: string): string | null {
+		console.log(content);
+		const lines = content.split("\n");
+		const emailLine = lines.find((line) =>
+			line.toLowerCase().includes("e-mail:")
+		);
+		if (emailLine) {
+			const emailMatch = emailLine.match(/[\w.-]+@[\w.-]+\.\w+/);
+			if (emailMatch && this.isValidEmail(emailMatch[0])) {
+				return emailMatch[0];
+			}
+		}
+		return null;
+	}
+
+	private isValidEmail(email: string): boolean {
+		const emailRegex =
+			/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		return emailRegex.test(email);
 	}
 }

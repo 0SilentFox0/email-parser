@@ -5,10 +5,13 @@ export class EmailProcessor {
 	constructor(private client: ImapFlow) {}
 
 	async fetchUnseenMessages(): Promise<FetchMessageObject[]> {
-		logger.info("Starting to fetch unseen messages...");
+		logger.info("Starting to fetch unseen messages from INBOX...");
 		try {
+			// Select the INBOX
+			await this.client.mailboxOpen("INBOX");
+
 			const messages = this.client.fetch(
-				"1:*",
+				{ seen: false },
 				{
 					uid: true,
 					flags: true,
@@ -18,10 +21,7 @@ export class EmailProcessor {
 					size: true,
 					source: true,
 				},
-				{
-					uid: true,
-					changedSince: BigInt(1),
-				}
+				{ uid: true }
 			);
 
 			const messageArray: FetchMessageObject[] = [];
@@ -29,7 +29,7 @@ export class EmailProcessor {
 				messageArray.push(message);
 			}
 
-			logger.info(`Fetched ${messageArray.length} unseen messages`);
+			logger.info(`Fetched ${messageArray.length} unseen messages from INBOX`);
 			return messageArray;
 		} catch (error) {
 			logger.error("Error fetching unseen messages:", error);

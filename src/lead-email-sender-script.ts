@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import path from "path";
 import { LeadModel, LeadDocument } from "./model/lead-model";
 import { logger } from "./logger-utility";
+import { emailTemplates, EmailTemplate } from "./email-templates";
 
 dotenv.config();
 
@@ -19,24 +20,23 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
+function getEmailTemplate(gender: string, lastName: string): EmailTemplate {
+	const template = emailTemplates[gender] || emailTemplates.other;
+	return {
+		subject: template.subject,
+		text: template.text.replace("{lastName}", lastName),
+	};
+}
+
 async function sendPersonalizedEmail(lead: LeadDocument): Promise<void> {
-	const greeting = lead.gender === "male" ? "Mr." : "Ms.";
 	const lastName = lead.name.split(" ").pop() || "";
+	const { subject, text } = getEmailTemplate(lead.gender, lastName);
 
 	const mailOptions = {
 		from: process.env.EMAIL_USER,
 		to: lead.email,
-		subject: "Welcome to Our Service",
-		text: `Dear ${greeting} ${lastName},
-
-Thank you for your interest in our service. We're excited to have you on board!
-
-Please find attached our product brochure with more information about our offerings.
-
-If you have any questions, feel free to reach out to us.
-
-Best regards,
-Your Company Name`,
+		subject: subject,
+		text: text,
 		attachments: [
 			{
 				filename: "product_brochure.pdf",
@@ -49,9 +49,11 @@ Your Company Name`,
 		await transporter.sendMail(mailOptions);
 		lead.emailSent = "sent";
 		await lead.save();
+		logger.info(`Email sent successfully to ${lead.email}`);
 	} catch (error) {
 		lead.emailSent = "failed";
 		await lead.save();
+		logger.error(`Failed to send email to ${lead.email}:`, error);
 		throw error;
 	}
 }
@@ -59,15 +61,20 @@ Your Company Name`,
 async function processNewLeads(): Promise<void> {
 	try {
 		const newLeads = await LeadModel.find({ emailSent: "pending" });
+		logger.info(`Processing ${newLeads.length} new leads`);
 
 		for (const lead of newLeads) {
 			try {
 				await sendPersonalizedEmail(lead);
-			} catch (error) {}
+			} catch (error) {
+				logger.error(`Error processing lead ${lead._id}:`, error);
+			}
 		}
 	} catch (error) {
+		logger.error("Error fetching new leads:", error);
 	} finally {
 		await mongoose.connection.close();
+		logger.info("MongoDB connection closed");
 	}
 }
 
