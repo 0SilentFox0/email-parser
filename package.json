@@ -5,8 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"start": "ts-node src/email-processing-script",
-		"send-batch": "ts-node batch-email-sender.ts",
-		"update-statistics": "ts-node update-statistics.ts",
+		"send-batch": "ts-node src/batch-email-sender.ts",
+		"update-statistics": "ts-node src/update-statistics.ts",
 		"test-email-connection": "ts-node src/test-email-connection",
 		"dev": "ts-node src/email-processing-script"
 	},
