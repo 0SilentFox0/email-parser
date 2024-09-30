@@ -3,9 +3,10 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface Lead {
 	wunschposition: string;
 	gender: "male" | "female" | "other";
-	name: string;
 	anschrift: string;
 	geburtsdatum: Date;
+	firstName: string;
+	lastName: string;
 	tel: string;
 	geburtsort: string;
 	ip: string;
@@ -20,7 +21,8 @@ export interface LeadDocument extends Lead, Document {}
 
 const leadSchema = new Schema<LeadDocument>({
 	wunschposition: { type: String, required: true },
-	name: { type: String, required: true },
+	firstName: { type: String, required: true },
+	lastName: { type: String, required: true },
 	anschrift: { type: String, required: true },
 	geburtsdatum: { type: Date, required: true },
 	tel: { type: String, required: true },

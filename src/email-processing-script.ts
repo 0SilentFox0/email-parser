@@ -46,7 +46,6 @@ async function processEmails(): Promise<void> {
 		const emailMover = new EmailMover(client);
 		const leadExtractor = new LeadExtractor();
 
-		// Open the INBOX
 		await client.mailboxOpen("INBOX");
 
 		const messages = await emailProcessor.fetchUnseenMessages();
@@ -55,10 +54,32 @@ async function processEmails(): Promise<void> {
 		for (const message of messages) {
 			try {
 				const parsed = await simpleParser(message.source);
-				const lead = leadExtractor.extractLeadInfo(parsed);
-				await LeadModel.create(lead);
-				await emailMover.moveEmail(message.uid, "Processed");
-				logger.info(`Processed email: ${message.uid}`);
+
+				// Check if we should only process emails from a single source
+				const singleLeadSource = process.env.SINGLE_LEAD_SOURCE === "true";
+				const singleLeadSourceEmail = process.env.SINGLE_LEAD_SOURCE_EMAIL;
+
+				if (
+					singleLeadSource &&
+					parsed.from?.value[0]?.address !== singleLeadSourceEmail
+				) {
+					logger.info(
+						`Skipping email from ${parsed.from?.value[0]?.address} as it's not from the designated lead source`
+					);
+					continue;
+				}
+
+				const leadInfo = leadExtractor.extractLeadInfo(parsed);
+				const existingLead = await LeadModel.findOne({ email: leadInfo.email });
+
+				if (existingLead) {
+					await emailMover.moveEmail(message.uid, "Duplicate");
+					logger.info(`Duplicate email: ${message.uid}`);
+				} else {
+					await LeadModel.create(leadInfo);
+					await emailMover.moveEmail(message.uid, "Processed");
+					logger.info(`Processed email: ${message.uid}`);
+				}
 			} catch (error) {
 				logger.error(`Error processing email ${message.uid}:`, error);
 				if (client.usable) {
@@ -66,7 +87,7 @@ async function processEmails(): Promise<void> {
 				} else {
 					logger.error("IMAP connection lost, reconnecting...");
 					client = await createImapConnection();
-					await client.mailboxOpen("INBOX"); // Re-open INBOX after reconnecting
+					await client.mailboxOpen("INBOX");
 					await emailMover.moveEmail(message.uid, "ProcessingError");
 				}
 			}

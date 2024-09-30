@@ -28,8 +28,8 @@ function getEmailTemplate(gender: string, lastName: string): EmailTemplate {
 	};
 }
 
-async function sendPersonalizedEmail(lead: LeadDocument): Promise<void> {
-	const lastName = lead.name.split(" ").pop() || "";
+export async function sendPersonalizedEmail(lead: LeadDocument): Promise<void> {
+	const lastName = lead.lastName || "";
 	const { subject, text } = getEmailTemplate(lead.gender, lastName);
 
 	const mailOptions = {

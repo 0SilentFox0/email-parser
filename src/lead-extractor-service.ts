@@ -8,7 +8,7 @@ export class LeadExtractor {
 
 		const extractedFields = {
 			wunschposition: this.extractField(lines, "Wunschposition"),
-			name: this.extractName(lines),
+			...this.extractName(lines),
 			gender: this.extractGender(lines),
 			email: this.extractEmail(parsedEmail),
 			anschrift: this.extractField(lines, "Anschrift"),
@@ -35,13 +35,16 @@ export class LeadExtractor {
 		return extracted || "Nicht angegeben";
 	}
 
-	private extractName(lines: string[]): string {
-		const nameField = this.extractField(lines, "Name");
-		const [lastName = "Unbekannt", firstName = "Unbekannt"] = nameField
-			.split(",")
-			.map((n) => n.trim());
-		const fullName = `${firstName} ${lastName}`;
-		return fullName;
+	private extractName(lines: string[]): {
+		firstName: string;
+		lastName: string;
+	} {
+		const firstNameField = this.extractField(lines, "Vorname");
+		const lastNameField = this.extractField(lines, "Nachname");
+		return {
+			firstName: firstNameField || "Unbekannt",
+			lastName: lastNameField || "Unbekannt",
+		};
 	}
 
 	private extractGender(lines: string[]): "male" | "female" | "other" {
