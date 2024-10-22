@@ -9,6 +9,7 @@ export interface Lead {
 	lastName: string;
 	tel: string;
 	geburtsort: string;
+	staatsangehörigkeit: string;
 	ip: string;
 	leadId: number;
 	eingabeschluessel: string;
@@ -24,6 +25,7 @@ const leadSchema = new Schema<LeadDocument>({
 	firstName: { type: String, required: true },
 	lastName: { type: String, required: true },
 	anschrift: { type: String, required: true },
+	staatsangehörigkeit: { type: String, required: true },
 	geburtsdatum: { type: Date, required: true },
 	tel: { type: String, required: true },
 	geburtsort: { type: String, required: true },
